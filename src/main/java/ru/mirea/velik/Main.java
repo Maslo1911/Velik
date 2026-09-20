@@ -1,4 +1,4 @@
-package ru.mirea.veilk;
+package ru.mirea.velik;
 
 import java.util.Scanner;
 
