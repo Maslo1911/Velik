@@ -1,0 +1,89 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.chart.BarChart?>
+<?import javafx.scene.chart.CategoryAxis?>
+<?import javafx.scene.chart.NumberAxis?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.DatePicker?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.ScrollPane?>
+<?import javafx.scene.layout.FlowPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.VBox?>
+
+<ScrollPane xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1"
+            fx:controller="ru.mirea.velik.fx.controller.StatisticsController"
+            fitToWidth="true" styleClass="section-scroll">
+    <VBox styleClass="section" spacing="14">
+
+        <Label text="Общие показатели" styleClass="section-title"/>
+        <FlowPane hgap="12" vgap="12">
+            <VBox styleClass="stat-tile">
+                <Label fx:id="totalRentalsLabel" styleClass="stat-value"/>
+                <Label text="Всего заявок" styleClass="stat-caption"/>
+            </VBox>
+            <VBox styleClass="stat-tile">
+                <Label fx:id="revenueLabel" styleClass="stat-value"/>
+                <Label text="Выручка по завершённым арендам" styleClass="stat-caption"/>
+            </VBox>
+            <VBox styleClass="stat-tile">
+                <Label fx:id="averageCheckLabel" styleClass="stat-value"/>
+                <Label text="Средний чек" styleClass="stat-caption"/>
+            </VBox>
+            <VBox styleClass="stat-tile">
+                <Label fx:id="minMaxCheckLabel" styleClass="stat-value"/>
+                <Label text="Минимальный / максимальный чек" styleClass="stat-caption"/>
+            </VBox>
+            <VBox styleClass="stat-tile">
+                <Label fx:id="averageDurationLabel" styleClass="stat-value"/>
+                <Label text="Средняя длительность аренды" styleClass="stat-caption"/>
+            </VBox>
+            <VBox styleClass="stat-tile">
+                <Label fx:id="completedShareLabel" styleClass="stat-value"/>
+                <Label text="Доля завершённых заявок" styleClass="stat-caption"/>
+            </VBox>
+            <VBox styleClass="stat-tile">
+                <Label fx:id="clientsLabel" styleClass="stat-value"/>
+                <Label text="Клиентов" styleClass="stat-caption"/>
+            </VBox>
+            <VBox styleClass="stat-tile">
+                <Label fx:id="bikesLabel" styleClass="stat-value"/>
+                <Label text="Свободных велосипедов" styleClass="stat-caption"/>
+            </VBox>
+            <VBox styleClass="stat-tile">
+                <Label fx:id="popularTypeLabel" styleClass="stat-value"/>
+                <Label text="Самый востребованный тип" styleClass="stat-caption"/>
+            </VBox>
+        </FlowPane>
+
+        <Label text="Показатели за период" styleClass="section-title"/>
+        <HBox styleClass="filter-bar" alignment="CENTER_LEFT" spacing="8">
+            <Label text="Начало аренды с"/>
+            <DatePicker fx:id="fromPicker" editable="false" promptText="дд.мм.гггг" prefWidth="140"/>
+            <Label text="по"/>
+            <DatePicker fx:id="toPicker" editable="false" promptText="дд.мм.гггг" prefWidth="140"/>
+            <Button text="Рассчитать" onAction="#onCalculate" styleClass="button-primary"/>
+            <Button text="За всё время" onAction="#onResetPeriod"/>
+        </HBox>
+        <FlowPane hgap="12" vgap="12">
+            <VBox styleClass="stat-tile">
+                <Label fx:id="periodRentalsLabel" styleClass="stat-value"/>
+                <Label text="Заявок за период" styleClass="stat-caption"/>
+            </VBox>
+            <VBox styleClass="stat-tile">
+                <Label fx:id="periodRevenueLabel" styleClass="stat-value"/>
+                <Label text="Выручка за период" styleClass="stat-caption"/>
+            </VBox>
+        </FlowPane>
+
+        <Label text="Заявки по статусам" styleClass="section-title"/>
+        <BarChart fx:id="statusChart" legendVisible="false" animated="false" prefHeight="280" minHeight="220">
+            <xAxis>
+                <CategoryAxis/>
+            </xAxis>
+            <yAxis>
+                <NumberAxis minorTickVisible="false" tickUnit="1" forceZeroInRange="true"/>
+            </yAxis>
+        </BarChart>
+    </VBox>
+</ScrollPane>

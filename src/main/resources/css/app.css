@@ -1,0 +1,263 @@
+/* Оформление приложения Velik. Цвета заданы переменными в .root и переиспользуются ниже. */
+
+.root {
+    -velik-accent: #1f6feb;
+    -velik-accent-dark: #1857b8;
+    -velik-danger: #c62828;
+    -velik-surface: #ffffff;
+    -velik-background: #f3f5f8;
+    -velik-border: #d5dae1;
+    -velik-text: #1f2933;
+    -velik-muted: #66727f;
+
+    -fx-font-family: "Segoe UI", "Arial", sans-serif;
+    -fx-font-size: 13px;
+    -fx-base: #eef1f5;
+    -fx-accent: -velik-accent;
+    -fx-focus-color: -velik-accent;
+    -fx-faint-focus-color: #1f6feb33;
+    -fx-background-color: -velik-background;
+}
+
+/* ---------- Шапка и строка состояния ---------- */
+
+.app-header {
+    -fx-background-color: #1b2a41;
+    -fx-padding: 12 20 12 20;
+}
+
+.app-title {
+    -fx-text-fill: white;
+    -fx-font-size: 20px;
+    -fx-font-weight: bold;
+}
+
+.app-subtitle {
+    -fx-text-fill: #b8c4d6;
+    -fx-font-size: 12px;
+}
+
+.status-bar {
+    -fx-background-color: #e6eaf0;
+    -fx-border-color: -velik-border transparent transparent transparent;
+    -fx-text-fill: -velik-muted;
+    -fx-font-size: 12px;
+    -fx-padding: 5 16 5 16;
+}
+
+/* ---------- Основные контейнеры ---------- */
+
+.section {
+    -fx-padding: 14 16 10 16;
+    -fx-background-color: -velik-background;
+}
+
+.section-scroll,
+.section-scroll > .viewport {
+    -fx-background-color: -velik-background;
+}
+
+.toolbar,
+.filter-bar {
+    -fx-background-color: -velik-surface;
+    -fx-border-color: -velik-border;
+    -fx-border-radius: 6;
+    -fx-background-radius: 6;
+    -fx-padding: 8 10 8 10;
+}
+
+.details-pane {
+    -fx-background-color: -velik-surface;
+    -fx-padding: 14;
+}
+
+.section-title {
+    -fx-font-size: 15px;
+    -fx-font-weight: bold;
+    -fx-text-fill: -velik-text;
+}
+
+.details-group {
+    -fx-font-weight: bold;
+    -fx-text-fill: -velik-text;
+    -fx-padding: 8 0 0 0;
+}
+
+.details-value {
+    -fx-text-fill: -velik-text;
+}
+
+.muted {
+    -fx-text-fill: -velik-muted;
+}
+
+/* ---------- Кнопки ---------- */
+
+.button {
+    -fx-background-radius: 5;
+    -fx-padding: 6 14 6 14;
+    -fx-cursor: hand;
+}
+
+.button-primary {
+    -fx-background-color: -velik-accent;
+    -fx-text-fill: white;
+    -fx-font-weight: bold;
+}
+
+.button-primary:hover {
+    -fx-background-color: -velik-accent-dark;
+}
+
+.button-danger {
+    -fx-background-color: -velik-surface;
+    -fx-border-color: -velik-danger;
+    -fx-border-radius: 5;
+    -fx-text-fill: -velik-danger;
+}
+
+.button-danger:hover {
+    -fx-background-color: -velik-danger;
+    -fx-text-fill: white;
+}
+
+.button-header {
+    -fx-background-color: transparent;
+    -fx-border-color: #6f7f97;
+    -fx-border-radius: 5;
+    -fx-text-fill: white;
+}
+
+.button-header:hover {
+    -fx-background-color: #2c4263;
+}
+
+.button:disabled {
+    -fx-opacity: 0.45;
+}
+
+/* ---------- Таблицы и списки ---------- */
+
+.table-view {
+    -fx-background-color: -velik-surface;
+    -fx-border-color: -velik-border;
+}
+
+.table-view .column-header {
+    -fx-background-color: #e9edf2;
+    -fx-border-color: transparent -velik-border -velik-border transparent;
+    -fx-padding: 6 4 6 4;
+}
+
+.table-view .column-header .label {
+    -fx-font-weight: bold;
+    -fx-text-fill: -velik-text;
+}
+
+.table-row-cell {
+    -fx-cell-size: 30px;
+}
+
+.table-row-cell:odd {
+    -fx-background-color: #f8f9fb;
+}
+
+.table-row-cell:selected {
+    -fx-background-color: #d6e6ff;
+}
+
+.table-row-cell:selected .table-cell {
+    -fx-text-fill: -velik-text;
+}
+
+.column-numeric {
+    -fx-alignment: CENTER-RIGHT;
+}
+
+.list-view {
+    -fx-border-color: -velik-border;
+}
+
+/* Цвет статуса заявки: в таблице и в панели сведений */
+.status-created {
+    -fx-text-fill: #9a6700;
+    -fx-font-weight: bold;
+}
+
+.status-active {
+    -fx-text-fill: #1a7f37;
+    -fx-font-weight: bold;
+}
+
+.status-completed {
+    -fx-text-fill: #1857b8;
+    -fx-font-weight: bold;
+}
+
+.status-cancelled {
+    -fx-text-fill: #8b949e;
+    -fx-font-weight: bold;
+}
+
+/* ---------- Формы ввода ---------- */
+
+.form-dialog > .content {
+    -fx-padding: 18 20 10 20;
+}
+
+.form-grid .label {
+    -fx-text-fill: -velik-text;
+}
+
+.text-field,
+.combo-box,
+.date-picker {
+    -fx-background-radius: 4;
+}
+
+/* Состояние ошибки: поле с неверным значением и текст сообщения */
+.field-error,
+.field-error:focused {
+    -fx-border-color: -velik-danger;
+    -fx-border-width: 1.5;
+    -fx-border-radius: 4;
+}
+
+.error-text {
+    -fx-text-fill: -velik-danger;
+    -fx-font-weight: bold;
+}
+
+/* ---------- Статистика ---------- */
+
+.stat-tile {
+    -fx-background-color: -velik-surface;
+    -fx-border-color: -velik-border;
+    -fx-border-radius: 8;
+    -fx-background-radius: 8;
+    -fx-padding: 14 18 14 18;
+    -fx-min-width: 210;
+    -fx-spacing: 4;
+}
+
+.stat-value {
+    -fx-font-size: 20px;
+    -fx-font-weight: bold;
+    -fx-text-fill: -velik-accent-dark;
+}
+
+.stat-caption {
+    -fx-text-fill: -velik-muted;
+}
+
+.chart {
+    -fx-background-color: -velik-surface;
+    -fx-border-color: -velik-border;
+    -fx-border-radius: 8;
+    -fx-background-radius: 8;
+    -fx-padding: 10;
+}
+
+.default-color0.chart-bar {
+    -fx-bar-fill: -velik-accent;
+}

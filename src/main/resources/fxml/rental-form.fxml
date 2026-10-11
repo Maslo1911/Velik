@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.ComboBox?>
+<?import javafx.scene.control.DatePicker?>
+<?import javafx.scene.control.DialogPane?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.layout.ColumnConstraints?>
+<?import javafx.scene.layout.GridPane?>
+<?import javafx.scene.layout.VBox?>
+
+<DialogPane xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1"
+            fx:controller="ru.mirea.velik.fx.controller.RentalFormController" styleClass="form-dialog">
+    <content>
+        <VBox spacing="12" prefWidth="460">
+            <GridPane styleClass="form-grid" hgap="12" vgap="10">
+                <columnConstraints>
+                    <ColumnConstraints minWidth="120"/>
+                    <ColumnConstraints hgrow="ALWAYS"/>
+                </columnConstraints>
+                <Label text="Клиент *" GridPane.rowIndex="0"/>
+                <ComboBox fx:id="clientBox" maxWidth="Infinity" GridPane.rowIndex="0" GridPane.columnIndex="1"/>
+
+                <Label text="Велосипед *" GridPane.rowIndex="1"/>
+                <ComboBox fx:id="bikeBox" maxWidth="Infinity" GridPane.rowIndex="1" GridPane.columnIndex="1"/>
+
+                <Label text="Дата начала *" GridPane.rowIndex="2"/>
+                <DatePicker fx:id="startDatePicker" editable="false" maxWidth="Infinity"
+                            GridPane.rowIndex="2" GridPane.columnIndex="1"/>
+
+                <Label text="Время начала *" GridPane.rowIndex="3"/>
+                <TextField fx:id="startTimeField" promptText="ЧЧ:ММ" GridPane.rowIndex="3" GridPane.columnIndex="1"/>
+            </GridPane>
+            <Label fx:id="hintLabel" styleClass="muted" wrapText="true"/>
+            <Label fx:id="errorLabel" styleClass="error-text" wrapText="true" visible="false" managed="false"/>
+        </VBox>
+    </content>
+</DialogPane>

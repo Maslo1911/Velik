@@ -2,15 +2,24 @@ package ru.mirea.velik.service;
 
 import ru.mirea.velik.exception.BusinessException;
 import ru.mirea.velik.exception.EntityNotFoundException;
+import ru.mirea.velik.exception.ValidationException;
 import ru.mirea.velik.model.Client;
 import ru.mirea.velik.repository.ClientRepository;
 import ru.mirea.velik.repository.RentalRepository;
 
 import java.util.Comparator;
 import java.util.List;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 public class ClientService {
+
+    // Длины соответствуют столбцам таблицы clients
+    private static final int MAX_NAME_LENGTH = 150;
+    private static final int MAX_PHONE_LENGTH = 30;
+    private static final int MAX_EMAIL_LENGTH = 100;
+    private static final Pattern PHONE_PATTERN = Pattern.compile("\\+?[0-9()\\-\\s]+");
+    private static final Pattern EMAIL_PATTERN = Pattern.compile("[^@\\s]+@[^@\\s]+\\.[^@\\s]+");
 
     private final ClientRepository clientRepository;
     private final RentalRepository rentalRepository;
@@ -21,8 +30,8 @@ public class ClientService {
     }
 
     public Client create(String fullName, String phone, String email) {
-        validateClientData(fullName, phone, email);
-        Client client = new Client(fullName.trim(), phone.trim(), email != null ? email.trim() : null);
+        validateClientData(null, fullName, phone, email);
+        Client client = new Client(fullName.trim(), phone.trim(), normalizeEmail(email));
         return clientRepository.save(client);
     }
 
@@ -37,11 +46,15 @@ public class ClientService {
 
     public Client update(int id, String fullName, String phone, String email) {
         Client existing = getById(id);
-        validateClientData(fullName, phone, email);
+        validateClientData(id, fullName, phone, email);
         existing.setFullName(fullName.trim());
         existing.setPhone(phone.trim());
-        existing.setEmail(email != null ? email.trim() : null);
+        existing.setEmail(normalizeEmail(email));
         return clientRepository.update(existing);
+    }
+
+    private String normalizeEmail(String email) {
+        return email == null || email.isBlank() ? null : email.trim();
     }
 
     public void delete(int id) {
@@ -81,20 +94,45 @@ public class ClientService {
                 .collect(Collectors.toList());
     }
 
-    private void validateClientData(String fullName, String phone, String email) {
+    /**
+     * @param selfId id редактируемого клиента или null при создании (нужен для проверки уникальности телефона)
+     */
+    private void validateClientData(Integer selfId, String fullName, String phone, String email) {
         // Бизнес-правило 1: обязательное ФИО
         if (fullName == null || fullName.isBlank()) {
-            throw new BusinessException("ФИО клиента обязательно для заполнения");
+            throw new ValidationException("fullName", "ФИО клиента обязательно для заполнения");
+        }
+        if (fullName.trim().length() > MAX_NAME_LENGTH) {
+            throw new ValidationException("fullName", "ФИО не должно быть длиннее " + MAX_NAME_LENGTH + " символов");
         }
         // Бизнес-правило 2: обязательный телефон
         if (phone == null || phone.isBlank()) {
-            throw new BusinessException("Телефон клиента обязателен для заполнения");
+            throw new ValidationException("phone", "Телефон клиента обязателен для заполнения");
         }
-        if (phone.trim().length() < 5) {
-            throw new BusinessException("Телефон должен содержать минимум 5 символов");
+        String trimmedPhone = phone.trim();
+        if (trimmedPhone.length() < 5) {
+            throw new ValidationException("phone", "Телефон должен содержать минимум 5 символов");
         }
-        if (email != null && !email.isBlank() && !email.contains("@")) {
-            throw new BusinessException("Некорректный формат email");
+        if (trimmedPhone.length() > MAX_PHONE_LENGTH) {
+            throw new ValidationException("phone", "Телефон не должен быть длиннее " + MAX_PHONE_LENGTH + " символов");
+        }
+        if (!PHONE_PATTERN.matcher(trimmedPhone).matches()) {
+            throw new ValidationException("phone", "Телефон может содержать только цифры, пробелы, скобки, дефис и знак + в начале");
+        }
+        // Телефон уникален (ограничение uq_clients_phone в базе данных)
+        boolean phoneTaken = clientRepository.findByPhone(trimmedPhone).stream()
+                .anyMatch(other -> selfId == null || other.getId() != selfId);
+        if (phoneTaken) {
+            throw new ValidationException("phone", "Клиент с телефоном " + trimmedPhone + " уже существует");
+        }
+        if (email != null && !email.isBlank()) {
+            String trimmedEmail = email.trim();
+            if (trimmedEmail.length() > MAX_EMAIL_LENGTH) {
+                throw new ValidationException("email", "Email не должен быть длиннее " + MAX_EMAIL_LENGTH + " символов");
+            }
+            if (!EMAIL_PATTERN.matcher(trimmedEmail).matches()) {
+                throw new ValidationException("email", "Некорректный формат email. Пример: name@mail.ru");
+            }
         }
     }
 }
