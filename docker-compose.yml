@@ -1,0 +1,29 @@
+# PostgreSQL с базой данных КР №1 (необязательно: можно использовать локально установленный PostgreSQL).
+# Запуск:    docker compose up -d --wait
+# Остановка: docker compose down        (данные сохраняются в томе velik-data)
+#
+# Порт на компьютере: 5433 (чтобы не конфликтовать с локальным PostgreSQL на 5432).
+# При использовании этого контейнера укажите в database.properties:
+#   db.url=jdbc:postgresql://localhost:5433/velik
+services:
+  postgres:
+    image: postgres:17
+    container_name: velik-postgres
+    environment:
+      POSTGRES_DB: velik
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: ${VELIK_DB_PASSWORD:-postgres}
+    ports:
+      - "${VELIK_DB_PORT:-5433}:5432"
+    volumes:
+      - velik-data:/var/lib/postgresql/data
+      # schema.sql выполняется один раз, при первом запуске на пустом томе
+      - ./schema.sql:/docker-entrypoint-initdb.d/01-schema.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d velik"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+volumes:
+  velik-data:

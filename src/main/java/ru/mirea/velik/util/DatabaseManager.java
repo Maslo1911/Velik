@@ -2,39 +2,46 @@ package ru.mirea.velik.util;
 
 import ru.mirea.velik.exception.DatabaseException;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
 import java.sql.Connection;
-import java.sql.DatabaseMetaData;
 import java.sql.DriverManager;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Properties;
 
 /**
  * Управление подключением к PostgreSQL.
- * Параметры можно переопределить через системные свойства или переменные окружения.
+ * Параметры читаются из database.properties; их можно переопределить
+ * через системные свойства (db.url, db.user, db.password) или переменные окружения
+ * (DB_URL, DB_USER, DB_PASSWORD).
  */
 public final class DatabaseManager {
 
-    private static final String DEFAULT_URL = "jdbc:postgresql://localhost:5432/velik";
-    private static final String DEFAULT_USER = "postgres";
-    private static final String DEFAULT_PASSWORD = "postgres";
+    private static final String PROPERTIES_FILE = "/database.properties";
+    private static final Properties FILE_PROPERTIES = loadFileProperties();
 
     private DatabaseManager() {
     }
 
     public static Connection getConnection() {
-        String url = System.getProperty("db.url", System.getenv().getOrDefault("DB_URL", DEFAULT_URL));
-        String user = System.getProperty("db.user", System.getenv().getOrDefault("DB_USER", DEFAULT_USER));
-        String password = System.getProperty("db.password", System.getenv().getOrDefault("DB_PASSWORD", DEFAULT_PASSWORD));
-
+        String url = getUrl();
         try {
-            return DriverManager.getConnection(url, user, password);
+            return DriverManager.getConnection(url, setting("db.user", "DB_USER"), setting("db.password", "DB_PASSWORD"));
         } catch (SQLException e) {
             throw new DatabaseException(
                     "Не удалось подключиться к базе данных. Проверьте, что PostgreSQL запущен и параметры подключения верны.\n" +
                             "URL: " + url + "\nПричина: " + e.getMessage(), e);
         }
+    }
+
+    /** JDBC-адрес текущей базы данных (для отображения в интерфейсе). */
+    public static String getUrl() {
+        return setting("db.url", "DB_URL");
     }
 
     /**
@@ -61,5 +68,32 @@ public final class DatabaseManager {
             throw new DatabaseException("Ошибка чтения списка таблиц: " + e.getMessage(), e);
         }
         return names;
+    }
+
+    /** Приоритет: системное свойство, переменная окружения, database.properties. */
+    private static String setting(String key, String envName) {
+        String value = System.getProperty(key);
+        if (value == null || value.isBlank()) {
+            value = System.getenv(envName);
+        }
+        if (value == null || value.isBlank()) {
+            value = FILE_PROPERTIES.getProperty(key);
+        }
+        if (value == null || value.isBlank()) {
+            throw new DatabaseException("Не задан параметр подключения «" + key + "». Укажите его в файле database.properties");
+        }
+        return value.trim();
+    }
+
+    private static Properties loadFileProperties() {
+        Properties properties = new Properties();
+        try (InputStream in = DatabaseManager.class.getResourceAsStream(PROPERTIES_FILE)) {
+            if (in != null) {
+                properties.load(new InputStreamReader(in, StandardCharsets.UTF_8));
+            }
+        } catch (IOException e) {
+            throw new DatabaseException("Не удалось прочитать файл database.properties: " + e.getMessage(), e);
+        }
+        return properties;
     }
 }

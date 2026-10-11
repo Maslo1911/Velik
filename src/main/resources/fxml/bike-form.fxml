@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.CheckBox?>
+<?import javafx.scene.control.ComboBox?>
+<?import javafx.scene.control.DialogPane?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.layout.ColumnConstraints?>
+<?import javafx.scene.layout.GridPane?>
+<?import javafx.scene.layout.VBox?>
+
+<DialogPane xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1"
+            fx:controller="ru.mirea.velik.fx.controller.BikeFormController" styleClass="form-dialog">
+    <content>
+        <VBox spacing="12" prefWidth="440">
+            <GridPane styleClass="form-grid" hgap="12" vgap="10">
+                <columnConstraints>
+                    <ColumnConstraints minWidth="120"/>
+                    <ColumnConstraints hgrow="ALWAYS"/>
+                </columnConstraints>
+                <Label text="Модель *" GridPane.rowIndex="0"/>
+                <TextField fx:id="modelField" promptText="Trek Marlin 5"
+                           GridPane.rowIndex="0" GridPane.columnIndex="1"/>
+
+                <Label text="Тип *" GridPane.rowIndex="1"/>
+                <ComboBox fx:id="typeBox" editable="true" promptText="Выберите или введите тип" maxWidth="Infinity"
+                          GridPane.rowIndex="1" GridPane.columnIndex="1"/>
+
+                <Label text="Цена за час, ₽ *" GridPane.rowIndex="2"/>
+                <TextField fx:id="priceField" promptText="150" GridPane.rowIndex="2" GridPane.columnIndex="1"/>
+
+                <CheckBox fx:id="availableCheck" text="Доступен для аренды" selected="true"
+                          GridPane.rowIndex="3" GridPane.columnIndex="1"/>
+            </GridPane>
+            <Label fx:id="errorLabel" styleClass="error-text" wrapText="true" visible="false" managed="false"/>
+        </VBox>
+    </content>
+</DialogPane>

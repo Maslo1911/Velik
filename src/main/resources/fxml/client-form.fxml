@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.DialogPane?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.layout.ColumnConstraints?>
+<?import javafx.scene.layout.GridPane?>
+<?import javafx.scene.layout.VBox?>
+
+<DialogPane xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1"
+            fx:controller="ru.mirea.velik.fx.controller.ClientFormController" styleClass="form-dialog">
+    <content>
+        <VBox spacing="12" prefWidth="440">
+            <GridPane styleClass="form-grid" hgap="12" vgap="10">
+                <columnConstraints>
+                    <ColumnConstraints minWidth="100"/>
+                    <ColumnConstraints hgrow="ALWAYS"/>
+                </columnConstraints>
+                <Label text="ФИО *" GridPane.rowIndex="0"/>
+                <TextField fx:id="fullNameField" promptText="Иванов Иван Иванович"
+                           GridPane.rowIndex="0" GridPane.columnIndex="1"/>
+
+                <Label text="Телефон *" GridPane.rowIndex="1"/>
+                <TextField fx:id="phoneField" promptText="+79001112233"
+                           GridPane.rowIndex="1" GridPane.columnIndex="1"/>
+
+                <Label text="Email" GridPane.rowIndex="2"/>
+                <TextField fx:id="emailField" promptText="name@mail.ru"
+                           GridPane.rowIndex="2" GridPane.columnIndex="1"/>
+            </GridPane>
+            <Label text="Поля со звёздочкой обязательны. Телефон должен быть уникальным." styleClass="muted" wrapText="true"/>
+            <Label fx:id="errorLabel" styleClass="error-text" wrapText="true" visible="false" managed="false"/>
+        </VBox>
+    </content>
+</DialogPane>
