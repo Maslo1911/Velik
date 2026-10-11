@@ -1,3 +1,6 @@
+-- Перед запуском создайте базу:  CREATE DATABASE velik ENCODING 'UTF8';
+-- Затем выполните этот скрипт:   psql -U postgres -d velik -f schema.sql
+
 DROP TABLE IF EXISTS rentals;
 DROP TABLE IF EXISTS bikes;
 DROP TABLE IF EXISTS clients;
@@ -37,6 +40,8 @@ CREATE TABLE rentals (
     status      VARCHAR(20) NOT NULL DEFAULT 'CREATED'
                 CHECK (status IN ('CREATED', 'ACTIVE', 'COMPLETED', 'CANCELLED')),
     total_cost  NUMERIC(10, 2) NOT NULL DEFAULT 0,
+    CONSTRAINT chk_total_cost_nonneg CHECK (total_cost >= 0),
+    CONSTRAINT chk_end_after_start   CHECK (end_time IS NULL OR end_time >= start_time),
     CONSTRAINT fk_rentals_client FOREIGN KEY (client_id) REFERENCES clients(id),
     CONSTRAINT fk_rentals_bike   FOREIGN KEY (bike_id)   REFERENCES bikes(id)
 );
@@ -71,7 +76,7 @@ INSERT INTO bikes (model, type, available, price_per_hour) VALUES
 
 INSERT INTO rentals (client_id, bike_id, start_time, end_time, status, total_cost) VALUES
 (1, 1,  '2026-09-20 10:00:00', '2026-09-20 13:00:00', 'COMPLETED', 450.00),
-(2, 2,  '2026-09-21 11:00:00', '2026-09-21 14:30:00', 'COMPLETED', 875.00),
+(2, 2,  '2026-09-21 11:00:00', '2026-09-21 14:30:00', 'COMPLETED', 1000.00),
 (3, 3,  '2026-09-22 09:00:00', NULL,                   'ACTIVE',    0.00),
 (4, 4,  '2026-09-23 12:00:00', NULL,                   'CREATED',   0.00),
 (5, 5,  '2026-09-18 15:00:00', '2026-09-18 16:00:00', 'CANCELLED', 0.00),

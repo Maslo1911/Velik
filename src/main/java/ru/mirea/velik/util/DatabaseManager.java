@@ -3,8 +3,12 @@ package ru.mirea.velik.util;
 import ru.mirea.velik.exception.DatabaseException;
 
 import java.sql.Connection;
+import java.sql.DatabaseMetaData;
 import java.sql.DriverManager;
+import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Управление подключением к PostgreSQL.
@@ -31,5 +35,31 @@ public final class DatabaseManager {
                     "Не удалось подключиться к базе данных. Проверьте, что PostgreSQL запущен и параметры подключения верны.\n" +
                             "URL: " + url + "\nПричина: " + e.getMessage(), e);
         }
+    }
+
+    /**
+     * Проверка доступности БД: открывает соединение и сразу закрывает его.
+     * При недоступной БД выбрасывает {@link DatabaseException}.
+     */
+    public static void checkConnection() {
+        try (Connection ignored = getConnection()) {
+            // соединение успешно открыто, закроется автоматически
+        } catch (SQLException e) {
+            throw new DatabaseException("Ошибка закрытия соединения: " + e.getMessage(), e);
+        }
+    }
+
+    /** Имена пользовательских таблиц текущей базы данных (через метаданные JDBC). */
+    public static List<String> getTableNames() {
+        List<String> names = new ArrayList<>();
+        try (Connection conn = getConnection();
+             ResultSet rs = conn.getMetaData().getTables(conn.getCatalog(), null, "%", new String[]{"TABLE"})) {
+            while (rs.next()) {
+                names.add(rs.getString("TABLE_NAME"));
+            }
+        } catch (SQLException e) {
+            throw new DatabaseException("Ошибка чтения списка таблиц: " + e.getMessage(), e);
+        }
+        return names;
     }
 }

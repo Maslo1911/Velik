@@ -97,7 +97,7 @@ public class JdbcClientRepository implements ClientRepository {
 
     @Override
     public List<Client> findByNameContaining(String namePart) {
-        String sql = "SELECT id, full_name, phone, email FROM clients WHERE full_name LIKE ? ORDER BY id";
+        String sql = "SELECT id, full_name, phone, email FROM clients WHERE full_name ILIKE ? ORDER BY id";
         List<Client> list = new ArrayList<>();
         try (Connection conn = DatabaseManager.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {

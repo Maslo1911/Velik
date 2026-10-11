@@ -12,7 +12,9 @@ import ru.mirea.velik.repository.RentalRepository;
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.Comparator;
+import java.util.EnumMap;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 public class RentalService {
@@ -57,8 +59,14 @@ public class RentalService {
         rental.setTotalCost(0);
         Rental saved = rentalRepository.save(rental);
 
-        // Помечаем велосипед как недоступный
-        bikeService.setAvailable(bikeId, false);
+        // Помечаем велосипед как недоступный. Если это не удалось, отменяем создание заявки,
+        // чтобы не осталось заявки при «свободном» велосипеде.
+        try {
+            bikeService.setAvailable(bikeId, false);
+        } catch (RuntimeException e) {
+            rentalRepository.deleteById(saved.getId());
+            throw e;
+        }
 
         return saved;
     }
@@ -74,33 +82,41 @@ public class RentalService {
 
     /**
      * Изменение статуса с проверкой допустимых переходов.
+     * Сначала сохраняется сама аренда, и только потом меняется доступность велосипеда.
      */
     public Rental changeStatus(int id, RentalStatus newStatus) {
         Rental rental = getById(id);
-        RentalStatus current = rental.getStatus();
 
         // Бизнес-правило 6: допустимые переходы статусов
-        validateStatusTransition(current, newStatus);
+        validateStatusTransition(rental.getStatus(), newStatus);
 
+        LocalDateTime now = LocalDateTime.now();
         rental.setStatus(newStatus);
 
-        if (newStatus == RentalStatus.ACTIVE && rental.getStartTime() == null) {
-            rental.setStartTime(LocalDateTime.now());
+        switch (newStatus) {
+            // Фактическое начало аренды: считаем время с момента выдачи велосипеда
+            case ACTIVE -> rental.setStartTime(now);
+            case COMPLETED -> {
+                rental.setEndTime(now);
+                rental.setTotalCost(calculateCost(rental, now));
+            }
+            case CANCELLED -> rental.setEndTime(now);
+            default -> { }
         }
 
-        if (newStatus == RentalStatus.COMPLETED) {
-            completeRental(rental);
-        }
+        Rental saved = rentalRepository.update(rental);
 
-        if (newStatus == RentalStatus.CANCELLED) {
-            // Возвращаем велосипед в доступные
+        // Велосипед освобождается при завершении или отмене
+        if (newStatus == RentalStatus.COMPLETED || newStatus == RentalStatus.CANCELLED) {
             bikeService.setAvailable(rental.getBikeId(), true);
-            rental.setEndTime(LocalDateTime.now());
         }
-
-        return rentalRepository.update(rental);
+        return saved;
     }
 
+    /**
+     * Изменение клиента и/или велосипеда в незавершённой аренде.
+     * При смене велосипеда старый освобождается, новый занимается.
+     */
     public Rental update(int id, int clientId, int bikeId) {
         Rental rental = getById(id);
         if (rental.getStatus() == RentalStatus.COMPLETED || rental.getStatus() == RentalStatus.CANCELLED) {
@@ -108,12 +124,26 @@ public class RentalService {
         }
         clientRepository.findById(clientId)
                 .orElseThrow(() -> new EntityNotFoundException("Клиент", clientId));
-        bikeRepository.findById(bikeId)
+        Bike newBike = bikeRepository.findById(bikeId)
                 .orElseThrow(() -> new EntityNotFoundException("Велосипед", bikeId));
+
+        int oldBikeId = rental.getBikeId();
+        boolean bikeChanged = oldBikeId != bikeId;
+
+        // Новый велосипед должен быть свободен
+        if (bikeChanged && (!newBike.isAvailable() || rentalRepository.hasActiveRentalForBike(bikeId))) {
+            throw new BusinessException("Велосипед с id=" + bikeId + " недоступен для аренды");
+        }
 
         rental.setClientId(clientId);
         rental.setBikeId(bikeId);
-        return rentalRepository.update(rental);
+        Rental saved = rentalRepository.update(rental);
+
+        if (bikeChanged) {
+            bikeService.setAvailable(bikeId, false);
+            bikeService.setAvailable(oldBikeId, true);
+        }
+        return saved;
     }
 
     public void delete(int id) {
@@ -121,12 +151,12 @@ public class RentalService {
         if (rental.getStatus() == RentalStatus.ACTIVE) {
             throw new BusinessException("Нельзя удалить активную аренду. Сначала завершите или отмените её.");
         }
-        // Если CREATED — возвращаем велосипед
-        if (rental.getStatus() == RentalStatus.CREATED) {
-            bikeService.setAvailable(rental.getBikeId(), true);
-        }
         if (!rentalRepository.deleteById(id)) {
             throw new EntityNotFoundException("Аренда", id);
+        }
+        // Если была CREATED, велосипед всё ещё занят этой заявкой, возвращаем его
+        if (rental.getStatus() == RentalStatus.CREATED) {
+            bikeService.setAvailable(rental.getBikeId(), true);
         }
     }
 
@@ -168,8 +198,16 @@ public class RentalService {
                 .collect(Collectors.toList());
     }
 
-    public long countByStatus(RentalStatus status) {
-        return getAll().stream().filter(r -> r.getStatus() == status).count();
+    /** Количество аренд по каждому статусу (для статистики). */
+    public Map<RentalStatus, Long> countByStatuses() {
+        Map<RentalStatus, Long> result = new EnumMap<>(RentalStatus.class);
+        for (RentalStatus status : RentalStatus.values()) {
+            result.put(status, 0L);
+        }
+        for (Rental rental : getAll()) {
+            result.merge(rental.getStatus(), 1L, Long::sum);
+        }
+        return result;
     }
 
     public double totalRevenue() {
@@ -179,23 +217,14 @@ public class RentalService {
                 .sum();
     }
 
-    private void completeRental(Rental rental) {
-        LocalDateTime end = LocalDateTime.now();
-        rental.setEndTime(end);
-        if (rental.getStartTime() == null) {
-            rental.setStartTime(end.minusHours(1));
-        }
-        // Минимум 1 час
+    /** Стоимость = число начатых часов (минимум 1) * цена за час. */
+    private double calculateCost(Rental rental, LocalDateTime end) {
         long minutes = Duration.between(rental.getStartTime(), end).toMinutes();
         double hours = Math.max(1.0, Math.ceil(minutes / 60.0));
 
         Bike bike = bikeRepository.findById(rental.getBikeId())
                 .orElseThrow(() -> new EntityNotFoundException("Велосипед", rental.getBikeId()));
-        double cost = hours * bike.getPricePerHour();
-        rental.setTotalCost(cost);
-
-        // Возвращаем велосипед
-        bikeService.setAvailable(rental.getBikeId(), true);
+        return hours * bike.getPricePerHour();
     }
 
     private void validateStatusTransition(RentalStatus current, RentalStatus next) {

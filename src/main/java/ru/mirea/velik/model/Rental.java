@@ -1,9 +1,12 @@
 package ru.mirea.velik.model;
 
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.Objects;
 
 public class Rental {
+
+    private static final DateTimeFormatter DTF = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
 
     private int id;
     private int clientId;
@@ -108,8 +111,8 @@ public class Rental {
         return String.format(
                 "Аренда[id=%d, clientId=%d, bikeId=%d, начало=%s, конец=%s, статус=%s, стоимость=%.2f]",
                 id, clientId, bikeId,
-                startTime,
-                endTime != null ? endTime : "—",
+                startTime != null ? startTime.format(DTF) : "—",
+                endTime != null ? endTime.format(DTF) : "—",
                 status,
                 totalCost
         );

@@ -38,7 +38,10 @@ public class BikeService {
     public Bike update(int id, String model, String type, boolean available, double pricePerHour) {
         Bike existing = getById(id);
         validateBikeData(model, type, pricePerHour);
-        // Бизнес-правило: нельзя сделать недоступным велосипед, если есть активная аренда (но доступность управляется через аренды)
+        // Бизнес-правило: нельзя вручную сделать велосипед «доступным», пока у него есть незавершённая аренда
+        if (available && rentalRepository.hasActiveRentalForBike(id)) {
+            throw new BusinessException("Велосипед с id=" + id + " нельзя пометить доступным: у него есть активные или созданные аренды");
+        }
         existing.setModel(model.trim());
         existing.setType(type.trim());
         existing.setAvailable(available);

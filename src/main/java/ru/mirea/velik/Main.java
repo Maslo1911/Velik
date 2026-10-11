@@ -17,13 +17,11 @@ import ru.mirea.velik.util.DatabaseManager;
 import ru.mirea.velik.util.ExcelExporter;
 
 import java.io.IOException;
-import java.sql.Connection;
-import java.sql.DatabaseMetaData;
-import java.sql.ResultSet;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 import java.util.List;
+import java.util.Map;
 import java.util.Scanner;
 
 /**
@@ -42,23 +40,18 @@ public class Main {
     public static void main(String[] args) {
         try {
             initServices();
-            // Проверка подключения
-            Connection conn = DatabaseManager.getConnection();
-            conn.close();
+            DatabaseManager.checkConnection();
             System.out.println("Подключение к базе данных успешно установлено.\n");
         } catch (DatabaseException e) {
             System.err.println("КРИТИЧЕСКАЯ ОШИБКА: " + e.getMessage());
             System.err.println("Создайте БД по скрипту schema.sql и проверьте параметры подключения.");
-            return;
-        } catch (java.sql.SQLException e) {
-            System.err.println("Ошибка закрытия соединения: " + e.getMessage());
             return;
         }
 
         boolean running = true;
         while (running) {
             printMainMenu();
-            String input = scanner.nextLine().trim();
+            String input = readLine().trim();
             try {
                 switch (input) {
                     case "1" -> handleClients();
@@ -126,7 +119,7 @@ public class Main {
             System.out.println("7. Сортировка по ID (убыв.)");
             System.out.println("0. Назад");
             System.out.print("Выберите действие: ");
-            String input = scanner.nextLine().trim();
+            String input = readLine().trim();
             try {
                 switch (input) {
                     case "1" -> addClient();
@@ -156,11 +149,11 @@ public class Main {
 
     private static void addClient() {
         System.out.print("ФИО: ");
-        String name = scanner.nextLine();
+        String name = readLine();
         System.out.print("Телефон: ");
-        String phone = scanner.nextLine();
+        String phone = readLine();
         System.out.print("Email (можно пусто): ");
-        String email = scanner.nextLine();
+        String email = readLine();
         if (email.isBlank()) email = null;
         Client c = clientService.create(name, phone, email);
         System.out.println("Создан: " + c);
@@ -168,12 +161,13 @@ public class Main {
 
     private static void updateClient() {
         int id = readInt("ID клиента: ");
+        System.out.println("Текущие данные: " + clientService.getById(id));
         System.out.print("Новое ФИО: ");
-        String name = scanner.nextLine();
+        String name = readLine();
         System.out.print("Новый телефон: ");
-        String phone = scanner.nextLine();
+        String phone = readLine();
         System.out.print("Новый email (можно пусто): ");
-        String email = scanner.nextLine();
+        String email = readLine();
         if (email.isBlank()) email = null;
         Client c = clientService.update(id, name, phone, email);
         System.out.println("Обновлён: " + c);
@@ -194,7 +188,7 @@ public class Main {
             System.out.println("7. Сортировка по цене (убыв.)");
             System.out.println("0. Назад");
             System.out.print("Выберите действие: ");
-            String input = scanner.nextLine().trim();
+            String input = readLine().trim();
             try {
                 switch (input) {
                     case "1" -> addBike();
@@ -224,9 +218,9 @@ public class Main {
 
     private static void addBike() {
         System.out.print("Модель: ");
-        String model = scanner.nextLine();
+        String model = readLine();
         System.out.print("Тип (городской/горный/шоссейный/электро): ");
-        String type = scanner.nextLine();
+        String type = readLine();
         double price = readDouble("Цена за час: ");
         Bike b = bikeService.create(model, type, true, price);
         System.out.println("Создан: " + b);
@@ -234,12 +228,12 @@ public class Main {
 
     private static void updateBike() {
         int id = readInt("ID велосипеда: ");
+        System.out.println("Текущие данные: " + bikeService.getById(id));
         System.out.print("Новая модель: ");
-        String model = scanner.nextLine();
+        String model = readLine();
         System.out.print("Новый тип: ");
-        String type = scanner.nextLine();
-        System.out.print("Доступен (true/false): ");
-        boolean available = Boolean.parseBoolean(scanner.nextLine().trim());
+        String type = readLine();
+        boolean available = readBoolean("Доступен (да/нет): ");
         double price = readDouble("Новая цена за час: ");
         Bike b = bikeService.update(id, model, type, available, price);
         System.out.println("Обновлён: " + b);
@@ -254,13 +248,14 @@ public class Main {
             System.out.println("1. Создать заявку на аренду");
             System.out.println("2. Показать все");
             System.out.println("3. Показать по ID");
-            System.out.println("4. Изменить статус");
-            System.out.println("5. Удалить");
-            System.out.println("6. Сортировка по дате начала");
-            System.out.println("7. Сортировка по стоимости (убыв.)");
+            System.out.println("4. Изменить клиента / велосипед");
+            System.out.println("5. Изменить статус");
+            System.out.println("6. Удалить");
+            System.out.println("7. Сортировка по дате начала");
+            System.out.println("8. Сортировка по стоимости (убыв.)");
             System.out.println("0. Назад");
             System.out.print("Выберите действие: ");
-            String input = scanner.nextLine().trim();
+            String input = readLine().trim();
             try {
                 switch (input) {
                     case "1" -> createRental();
@@ -269,14 +264,15 @@ public class Main {
                         int id = readInt("Введите ID аренды: ");
                         System.out.println(rentalService.getById(id));
                     }
-                    case "4" -> changeRentalStatus();
-                    case "5" -> {
+                    case "4" -> updateRental();
+                    case "5" -> changeRentalStatus();
+                    case "6" -> {
                         int id = readInt("Введите ID аренды для удаления: ");
                         rentalService.delete(id);
                         System.out.println("Аренда удалена.");
                     }
-                    case "6" -> printList(rentalService.sortByStartTimeAsc());
-                    case "7" -> printList(rentalService.sortByCostDesc());
+                    case "7" -> printList(rentalService.sortByStartTimeAsc());
+                    case "8" -> printList(rentalService.sortByCostDesc());
                     case "0" -> back = true;
                     default -> System.out.println("Неизвестный пункт.");
                 }
@@ -295,11 +291,21 @@ public class Main {
         System.out.println("Создана заявка: " + r);
     }
 
+    private static void updateRental() {
+        int id = readInt("ID аренды: ");
+        System.out.println("Текущие данные: " + rentalService.getById(id));
+        int clientId = readInt("Новый ID клиента: ");
+        int bikeId = readInt("Новый ID велосипеда: ");
+        Rental r = rentalService.update(id, clientId, bikeId);
+        System.out.println("Заявка обновлена: " + r);
+    }
+
     private static void changeRentalStatus() {
         int id = readInt("ID аренды: ");
+        System.out.println("Текущие данные: " + rentalService.getById(id));
         System.out.println("Доступные статусы: CREATED, ACTIVE, COMPLETED, CANCELLED");
         System.out.print("Новый статус: ");
-        String statusStr = scanner.nextLine().trim().toUpperCase();
+        String statusStr = readLine().trim().toUpperCase();
         RentalStatus status;
         try {
             status = RentalStatus.valueOf(statusStr);
@@ -324,20 +330,20 @@ public class Main {
             System.out.println("5. Аренды по ID велосипеда");
             System.out.println("0. Назад");
             System.out.print("Выберите действие: ");
-            String input = scanner.nextLine().trim();
+            String input = readLine().trim();
             try {
                 switch (input) {
                     case "1" -> {
                         System.out.print("Часть ФИО: ");
-                        printList(clientService.searchByName(scanner.nextLine()));
+                        printList(clientService.searchByName(readLine()));
                     }
                     case "2" -> {
                         System.out.print("Телефон: ");
-                        printList(clientService.searchByPhone(scanner.nextLine()));
+                        printList(clientService.searchByPhone(readLine()));
                     }
                     case "3" -> {
                         System.out.print("Часть модели: ");
-                        printList(bikeService.searchByModel(scanner.nextLine()));
+                        printList(bikeService.searchByModel(readLine()));
                     }
                     case "4" -> {
                         int id = readInt("ID клиента: ");
@@ -370,17 +376,17 @@ public class Main {
             System.out.println("4. Аренды по диапазону дат начала");
             System.out.println("0. Назад");
             System.out.print("Выберите действие: ");
-            String input = scanner.nextLine().trim();
+            String input = readLine().trim();
             try {
                 switch (input) {
                     case "1" -> {
                         System.out.print("Тип (городской/горный/шоссейный/электро): ");
-                        printList(bikeService.filterByType(scanner.nextLine()));
+                        printList(bikeService.filterByType(readLine()));
                     }
                     case "2" -> printList(bikeService.filterAvailable());
                     case "3" -> {
                         System.out.print("Статус (CREATED/ACTIVE/COMPLETED/CANCELLED): ");
-                        RentalStatus st = RentalStatus.valueOf(scanner.nextLine().trim().toUpperCase());
+                        RentalStatus st = RentalStatus.valueOf(readLine().trim().toUpperCase());
                         printList(rentalService.filterByStatus(st));
                     }
                     case "4" -> {
@@ -407,24 +413,21 @@ public class Main {
         try {
             List<Client> clients = clientService.getAll();
             List<Bike> bikes = bikeService.getAll();
-            List<Rental> rentals = rentalService.getAll();
+            Map<RentalStatus, Long> byStatus = rentalService.countByStatuses();
 
             long availableBikes = bikes.stream().filter(Bike::isAvailable).count();
-            long created = rentalService.countByStatus(RentalStatus.CREATED);
-            long active = rentalService.countByStatus(RentalStatus.ACTIVE);
-            long completed = rentalService.countByStatus(RentalStatus.COMPLETED);
-            long cancelled = rentalService.countByStatus(RentalStatus.CANCELLED);
+            long totalRentals = byStatus.values().stream().mapToLong(Long::longValue).sum();
             double revenue = rentalService.totalRevenue();
 
             System.out.println("\n=========== СТАТИСТИКА СИСТЕМЫ ===========");
             System.out.println("Всего клиентов:           " + clients.size());
             System.out.println("Всего велосипедов:        " + bikes.size());
             System.out.println("Доступных велосипедов:    " + availableBikes);
-            System.out.println("Всего заявок на аренду:   " + rentals.size());
-            System.out.println("  — созданных (CREATED):  " + created);
-            System.out.println("  — активных (ACTIVE):    " + active);
-            System.out.println("  — завершённых:          " + completed);
-            System.out.println("  — отменённых:           " + cancelled);
+            System.out.println("Всего заявок на аренду:   " + totalRentals);
+            System.out.println("  — созданных (CREATED):  " + byStatus.get(RentalStatus.CREATED));
+            System.out.println("  — активных (ACTIVE):    " + byStatus.get(RentalStatus.ACTIVE));
+            System.out.println("  — завершённых:          " + byStatus.get(RentalStatus.COMPLETED));
+            System.out.println("  — отменённых:           " + byStatus.get(RentalStatus.CANCELLED));
             System.out.printf("Общая выручка:            %.2f руб.%n", revenue);
             System.out.println("==========================================\n");
         } catch (DatabaseException e) {
@@ -437,7 +440,7 @@ public class Main {
     private static void handleExport() {
         try {
             System.out.print("Имя файла (например, export.xlsx): ");
-            String fileName = scanner.nextLine().trim();
+            String fileName = readLine().trim();
             if (fileName.isBlank()) {
                 fileName = "velik_export.xlsx";
             }
@@ -462,13 +465,10 @@ public class Main {
     // ==================== ПОКАЗ ТАБЛИЦ ====================
 
     private static void handleShowTables() {
-        try (Connection conn = DatabaseManager.getConnection()) {
-            DatabaseMetaData meta = conn.getMetaData();
+        try {
             System.out.println("\nТаблицы в базе данных:");
-            try (ResultSet rs = meta.getTables(conn.getCatalog(), null, "%", new String[]{"TABLE"})) {
-                while (rs.next()) {
-                    System.out.println("  - " + rs.getString("TABLE_NAME"));
-                }
+            for (String tableName : DatabaseManager.getTableNames()) {
+                System.out.println("  - " + tableName);
             }
             System.out.println();
             System.out.println("--- clients ---");
@@ -477,17 +477,45 @@ public class Main {
             printList(bikeService.getAll());
             System.out.println("--- rentals ---");
             printList(rentalService.getAll());
-        } catch (Exception e) {
-            System.out.println("Ошибка: " + e.getMessage());
+        } catch (DatabaseException e) {
+            System.out.println("Ошибка БД: " + e.getMessage());
         }
     }
 
     // ==================== УТИЛИТЫ ВВОДА ====================
 
+    /**
+     * Чтение строки из консоли. Если ввод закрыт (Ctrl+D / Ctrl+Z), программа завершается
+     * корректно, а не падает с NoSuchElementException.
+     */
+    private static String readLine() {
+        if (!scanner.hasNextLine()) {
+            System.out.println("\nВвод завершён. Выход из программы...");
+            System.exit(0);
+        }
+        return scanner.nextLine();
+    }
+
+    private static boolean readBoolean(String prompt) {
+        while (true) {
+            System.out.print(prompt);
+            String line = readLine().trim().toLowerCase();
+            switch (line) {
+                case "да", "д", "yes", "y", "true" -> {
+                    return true;
+                }
+                case "нет", "н", "no", "n", "false" -> {
+                    return false;
+                }
+                default -> System.out.println("Ошибка: введите «да» или «нет».");
+            }
+        }
+    }
+
     private static int readInt(String prompt) {
         while (true) {
             System.out.print(prompt);
-            String line = scanner.nextLine().trim();
+            String line = readLine().trim();
             try {
                 return Integer.parseInt(line);
             } catch (NumberFormatException e) {
@@ -499,7 +527,7 @@ public class Main {
     private static double readDouble(String prompt) {
         while (true) {
             System.out.print(prompt);
-            String line = scanner.nextLine().trim().replace(',', '.');
+            String line = readLine().trim().replace(',', '.');
             try {
                 return Double.parseDouble(line);
             } catch (NumberFormatException e) {
@@ -511,7 +539,7 @@ public class Main {
     private static LocalDateTime readDateTime(String prompt) {
         while (true) {
             System.out.print(prompt);
-            String line = scanner.nextLine().trim();
+            String line = readLine().trim();
             try {
                 return LocalDateTime.parse(line, DTF);
             } catch (DateTimeParseException e) {

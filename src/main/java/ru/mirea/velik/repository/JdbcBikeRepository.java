@@ -99,7 +99,7 @@ public class JdbcBikeRepository implements BikeRepository {
 
     @Override
     public List<Bike> findByType(String type) {
-        String sql = "SELECT id, model, type, available, price_per_hour FROM bikes WHERE type = ? ORDER BY id";
+        String sql = "SELECT id, model, type, available, price_per_hour FROM bikes WHERE LOWER(type) = LOWER(?) ORDER BY id";
         List<Bike> list = new ArrayList<>();
         try (Connection conn = DatabaseManager.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
@@ -133,7 +133,7 @@ public class JdbcBikeRepository implements BikeRepository {
 
     @Override
     public List<Bike> findByModelContaining(String modelPart) {
-        String sql = "SELECT id, model, type, available, price_per_hour FROM bikes WHERE model LIKE ? ORDER BY id";
+        String sql = "SELECT id, model, type, available, price_per_hour FROM bikes WHERE model ILIKE ? ORDER BY id";
         List<Bike> list = new ArrayList<>();
         try (Connection conn = DatabaseManager.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
